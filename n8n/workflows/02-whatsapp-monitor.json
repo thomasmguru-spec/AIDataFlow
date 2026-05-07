@@ -1,0 +1,133 @@
+{
+  "name": "WhatsApp Monitor (Twilio) - Document Ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-incoming",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Twilio Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.type }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "check-type",
+      "name": "Check Message Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.type }}",
+              "operation": "equals",
+              "value2": "image"
+            },
+            {
+              "value1": "={{ $json.body.type }}",
+              "operation": "equals",
+              "value2": "document"
+            }
+          ],
+          "combineOperation": "any"
+        }
+      },
+      "id": "is-media",
+      "name": "Is Media?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.data.url || $json.body.data.mediaUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "download-media",
+      "name": "Download Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, 200],
+      "credentials": { "httpBasicAuth": { "id": "twilio-auth", "name": "Twilio API Credentials" } }
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.APP_URL }}/api/webhooks/whatsapp",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "forward-to-app",
+      "name": "Forward to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.APP_URL }}/api/webhooks/whatsapp",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "forward-text-to-app",
+      "name": "Forward Text to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\" }",
+        "options": {}
+      },
+      "id": "respond-ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Twilio Webhook": { "main": [[{ "node": "Check Message Type", "type": "main", "index": 0 }]] },
+    "Check Message Type": {
+      "main": [
+        [{ "node": "Is Media?", "type": "main", "index": 0 }],
+        [{ "node": "Respond OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Media?": {
+      "main": [
+        [{ "node": "Download Media", "type": "main", "index": 0 }],
+        [{ "node": "Forward Text to App", "type": "main", "index": 0 }]
+      ]
+    },
+    "Download Media": { "main": [[{ "node": "Forward to App", "type": "main", "index": 0 }]] },
+    "Forward to App": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
+    "Forward Text to App": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "document-ingestion" }, { "name": "whatsapp" }, { "name": "twilio" }]
+}

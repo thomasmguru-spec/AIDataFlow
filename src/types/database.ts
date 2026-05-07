@@ -1,0 +1,517 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          id: string;
+          auth_user_id: string | null;
+          email: string | null;
+          full_name: string;
+          role: string;
+          is_active: boolean;
+          preferences: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          auth_user_id?: string | null;
+          email?: string | null;
+          full_name: string;
+          role?: string;
+          is_active?: boolean;
+          preferences?: Json;
+        };
+        Update: {
+          auth_user_id?: string | null;
+          email?: string | null;
+          full_name?: string;
+          role?: string;
+          is_active?: boolean;
+          preferences?: Json;
+        };
+        Relationships: [];
+      };
+      documents: {
+        Row: {
+          id: string;
+          source: string;
+          source_identifier: string | null;
+          original_filename: string | null;
+          file_url: string;
+          file_size_bytes: number | null;
+          file_mime_type: string | null;
+          document_type: string;
+          classification_confidence: number | null;
+          status: string;
+          email_subject: string | null;
+          email_sender: string | null;
+          whatsapp_sender: string | null;
+          whatsapp_message_id: string | null;
+          scan_dpi: number | null;
+          ocr_raw_text: string | null;
+          ocr_confidence: number | null;
+          ocr_language: string | null;
+          ocr_word_count: number | null;
+          ocr_blocks: Json | null;
+          preprocessed_file_url: string | null;
+          preprocessing_ops: Json | null;
+          processing_log: Json;
+          total_processing_time_ms: number | null;
+          error_message: string | null;
+          retry_count: number;
+          received_at: string;
+          processed_at: string | null;
+          exported_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          source: string;
+          file_url: string;
+          source_identifier?: string | null;
+          original_filename?: string | null;
+          file_size_bytes?: number | null;
+          file_mime_type?: string | null;
+          document_type?: string;
+          status?: string;
+          email_subject?: string | null;
+          email_sender?: string | null;
+          whatsapp_sender?: string | null;
+          whatsapp_message_id?: string | null;
+          scan_dpi?: number | null;
+        };
+        Update: {
+          source?: string;
+          file_url?: string;
+          source_identifier?: string | null;
+          original_filename?: string | null;
+          document_type?: string;
+          classification_confidence?: number | null;
+          status?: string;
+          ocr_raw_text?: string | null;
+          ocr_confidence?: number | null;
+          ocr_language?: string | null;
+          ocr_word_count?: number | null;
+          ocr_blocks?: Json | null;
+          preprocessed_file_url?: string | null;
+          preprocessing_ops?: Json | null;
+          processing_log?: Json;
+          total_processing_time_ms?: number | null;
+          error_message?: string | null;
+          retry_count?: number;
+          processed_at?: string | null;
+          exported_at?: string | null;
+        };
+        Relationships: [];
+      };
+      invoices: {
+        Row: {
+          id: string;
+          document_id: string;
+          invoice_number: string | null;
+          invoice_date: string | null;
+          due_date: string | null;
+          payment_terms: string | null;
+          currency: string;
+          vendor_name: string | null;
+          vendor_code: string | null;
+          vendor_address: string | null;
+          vendor_gstin: string | null;
+          vendor_email: string | null;
+          vendor_phone: string | null;
+          bill_to_name: string | null;
+          bill_to_address: string | null;
+          subtotal: number | null;
+          tax_amount: number | null;
+          discount_amount: number | null;
+          total_amount: number | null;
+          field_confidences: Json;
+          validation_status: string | null;
+          validation_checks: Json;
+          validation_errors: number | null;
+          validation_warnings: number | null;
+          exception_status: string | null;
+          exception_priority: string | null;
+          exception_reason: string | null;
+          exception_assigned_to: string | null;
+          exception_reviewed_by: string | null;
+          exception_reviewed_at: string | null;
+          exception_notes: string | null;
+          exception_comments: Json;
+          corrections_made: Json;
+          is_duplicate: boolean;
+          export_status: string | null;
+          export_batch_id: string | null;
+          export_csv_url: string | null;
+          exported_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          document_id: string;
+          invoice_number?: string | null;
+          invoice_date?: string | null;
+          due_date?: string | null;
+          payment_terms?: string | null;
+          currency?: string;
+          vendor_name?: string | null;
+          vendor_code?: string | null;
+          vendor_address?: string | null;
+          vendor_gstin?: string | null;
+          vendor_email?: string | null;
+          vendor_phone?: string | null;
+          bill_to_name?: string | null;
+          bill_to_address?: string | null;
+          subtotal?: number | null;
+          tax_amount?: number | null;
+          discount_amount?: number | null;
+          total_amount?: number | null;
+          field_confidences?: Json;
+        };
+        Update: {
+          invoice_number?: string | null;
+          invoice_date?: string | null;
+          due_date?: string | null;
+          payment_terms?: string | null;
+          vendor_name?: string | null;
+          vendor_code?: string | null;
+          subtotal?: number | null;
+          tax_amount?: number | null;
+          discount_amount?: number | null;
+          total_amount?: number | null;
+          field_confidences?: Json;
+          validation_status?: string | null;
+          validation_checks?: Json;
+          validation_errors?: number | null;
+          validation_warnings?: number | null;
+          exception_status?: string | null;
+          exception_priority?: string | null;
+          exception_reason?: string | null;
+          exception_assigned_to?: string | null;
+          exception_reviewed_by?: string | null;
+          exception_reviewed_at?: string | null;
+          exception_notes?: string | null;
+          exception_comments?: Json;
+          corrections_made?: Json;
+          is_duplicate?: boolean;
+          export_status?: string | null;
+          export_batch_id?: string | null;
+          export_csv_url?: string | null;
+          exported_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoices_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      invoice_lines: {
+        Row: {
+          id: string;
+          invoice_id: string;
+          line_number: number;
+          description: string | null;
+          sku_code: string | null;
+          sku_name: string | null;
+          hsn_code: string | null;
+          unit_of_measure: string | null;
+          quantity: number | null;
+          unit_price: number | null;
+          discount: number | null;
+          tax_rate: number | null;
+          tax_amount: number | null;
+          line_total: number | null;
+          sku_matched: boolean;
+          math_valid: boolean | null;
+          field_confidences: Json;
+          created_at: string;
+        };
+        Insert: {
+          invoice_id: string;
+          line_number: number;
+          description?: string | null;
+          sku_code?: string | null;
+          sku_name?: string | null;
+          hsn_code?: string | null;
+          unit_of_measure?: string | null;
+          quantity?: number | null;
+          unit_price?: number | null;
+          discount?: number | null;
+          tax_rate?: number | null;
+          tax_amount?: number | null;
+          line_total?: number | null;
+          sku_matched?: boolean;
+          math_valid?: boolean | null;
+          field_confidences?: Json;
+        };
+        Update: {
+          description?: string | null;
+          sku_code?: string | null;
+          sku_name?: string | null;
+          quantity?: number | null;
+          unit_price?: number | null;
+          discount?: number | null;
+          tax_rate?: number | null;
+          tax_amount?: number | null;
+          line_total?: number | null;
+          sku_matched?: boolean;
+          math_valid?: boolean | null;
+          field_confidences?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      orders: {
+        Row: {
+          id: string;
+          document_id: string;
+          order_number: string | null;
+          order_date: string | null;
+          delivery_date: string | null;
+          payment_terms: string | null;
+          special_instructions: string | null;
+          currency: string;
+          customer_name: string | null;
+          customer_code: string | null;
+          customer_phone: string | null;
+          customer_email: string | null;
+          customer_whatsapp: string | null;
+          billing_address: string | null;
+          shipping_address: string | null;
+          subtotal: number | null;
+          tax_amount: number | null;
+          total_amount: number | null;
+          field_confidences: Json;
+          validation_status: string | null;
+          validation_checks: Json;
+          validation_errors: number | null;
+          validation_warnings: number | null;
+          exception_status: string | null;
+          exception_priority: string | null;
+          exception_reason: string | null;
+          exception_assigned_to: string | null;
+          exception_reviewed_by: string | null;
+          exception_reviewed_at: string | null;
+          exception_notes: string | null;
+          exception_comments: Json;
+          corrections_made: Json;
+          is_duplicate: boolean;
+          requires_approval: boolean;
+          export_status: string | null;
+          export_batch_id: string | null;
+          export_csv_url: string | null;
+          exported_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          document_id: string;
+          order_number?: string | null;
+          order_date?: string | null;
+          delivery_date?: string | null;
+          payment_terms?: string | null;
+          special_instructions?: string | null;
+          currency?: string;
+          customer_name?: string | null;
+          customer_code?: string | null;
+          customer_phone?: string | null;
+          customer_email?: string | null;
+          customer_whatsapp?: string | null;
+          billing_address?: string | null;
+          shipping_address?: string | null;
+          subtotal?: number | null;
+          tax_amount?: number | null;
+          total_amount?: number | null;
+          field_confidences?: Json;
+        };
+        Update: {
+          order_number?: string | null;
+          order_date?: string | null;
+          delivery_date?: string | null;
+          payment_terms?: string | null;
+          special_instructions?: string | null;
+          customer_name?: string | null;
+          customer_code?: string | null;
+          subtotal?: number | null;
+          tax_amount?: number | null;
+          total_amount?: number | null;
+          field_confidences?: Json;
+          validation_status?: string | null;
+          validation_checks?: Json;
+          validation_errors?: number | null;
+          validation_warnings?: number | null;
+          exception_status?: string | null;
+          exception_priority?: string | null;
+          exception_reason?: string | null;
+          exception_assigned_to?: string | null;
+          exception_reviewed_by?: string | null;
+          exception_reviewed_at?: string | null;
+          exception_notes?: string | null;
+          exception_comments?: Json;
+          corrections_made?: Json;
+          is_duplicate?: boolean;
+          requires_approval?: boolean;
+          export_status?: string | null;
+          export_batch_id?: string | null;
+          export_csv_url?: string | null;
+          exported_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orders_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      order_lines: {
+        Row: {
+          id: string;
+          order_id: string;
+          line_number: number;
+          description: string | null;
+          sku_code: string | null;
+          sku_name: string | null;
+          unit_of_measure: string | null;
+          quantity: number | null;
+          unit_price: number | null;
+          line_total: number | null;
+          sku_matched: boolean;
+          field_confidences: Json;
+          created_at: string;
+        };
+        Insert: {
+          order_id: string;
+          line_number: number;
+          description?: string | null;
+          sku_code?: string | null;
+          sku_name?: string | null;
+          unit_of_measure?: string | null;
+          quantity?: number | null;
+          unit_price?: number | null;
+          line_total?: number | null;
+          sku_matched?: boolean;
+          field_confidences?: Json;
+        };
+        Update: {
+          description?: string | null;
+          sku_code?: string | null;
+          sku_name?: string | null;
+          quantity?: number | null;
+          unit_price?: number | null;
+          line_total?: number | null;
+          sku_matched?: boolean;
+          field_confidences?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      item_master: {
+        Row: {
+          id: string;
+          sku_code: string | null;
+          upc: string | null;
+          plu: string | null;
+          description: string | null;
+          group_name: string | null;
+          location: string | null;
+          on_hand: number | null;
+          unit_price: number | null;
+          source: string;
+          last_synced_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          sku_code?: string | null;
+          upc?: string | null;
+          plu?: string | null;
+          description?: string | null;
+          group_name?: string | null;
+          location?: string | null;
+          on_hand?: number | null;
+          unit_price?: number | null;
+          source?: string;
+          last_synced_at?: string;
+        };
+        Update: {
+          sku_code?: string | null;
+          upc?: string | null;
+          plu?: string | null;
+          description?: string | null;
+          group_name?: string | null;
+          location?: string | null;
+          on_hand?: number | null;
+          unit_price?: number | null;
+          source?: string;
+          last_synced_at?: string;
+        };
+        Relationships: [];
+      };
+    };
+    Views: {
+      v_today_stats: {
+        Row: {
+          total_today: number | null;
+          successful: number | null;
+          exceptions: number | null;
+          failed: number | null;
+          in_progress: number | null;
+          avg_processing_ms: number | null;
+          avg_confidence: number | null;
+          from_email: number | null;
+          from_whatsapp: number | null;
+          from_scanner: number | null;
+          from_cloud: number | null;
+        };
+        Relationships: [];
+      };
+      v_pending_exceptions: {
+        Row: {
+          document_id: string | null;
+          source: string | null;
+          document_type: string | null;
+          original_filename: string | null;
+          file_url: string | null;
+          received_at: string | null;
+          ocr_confidence: number | null;
+          record_id: string | null;
+          reference_number: string | null;
+          total_amount: number | null;
+          party_name: string | null;
+          exception_status: string | null;
+          exception_priority: string | null;
+          exception_reason: string | null;
+          assigned_to: string | null;
+          exception_created_at: string | null;
+        };
+        Relationships: [];
+      };
+    };
+    Functions: {};
+    Enums: {};
+  };
+}

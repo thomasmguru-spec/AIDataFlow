@@ -1,0 +1,99 @@
+{
+  "name": "Email Monitor - Document Ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute", "minute": 2 }] },
+        "mailbox": "INBOX",
+        "options": {
+          "customEmailConfig": "imap.gmail.com",
+          "forceReconnect": true
+        }
+      },
+      "id": "email-trigger",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "string": [
+            {
+              "value1": "={{ $json.attachments.length }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "has-attachments",
+      "name": "Has Attachments?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "attachments",
+        "options": {}
+      },
+      "id": "split-attachments",
+      "name": "Split Attachments",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [600, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.APP_URL }}/api/webhooks/email",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "sender", "value": "={{ $json.from }}" },
+            { "name": "subject", "value": "={{ $json.subject }}" },
+            { "name": "filename", "value": "={{ $json.attachments[0].filename }}" },
+            { "name": "file", "parameterType": "formBinaryData", "inputDataFieldName": "attachment" }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "send-to-app",
+      "name": "Upload to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "processing_logs",
+        "columns": "document_id,step_name,status,details",
+        "options": {}
+      },
+      "id": "log-result",
+      "name": "Log Result",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1000, 200],
+      "credentials": { "postgres": { "id": "supabase-db", "name": "Supabase DB" } }
+    }
+  ],
+  "connections": {
+    "Email Trigger": { "main": [[{ "node": "Has Attachments?", "type": "main", "index": 0 }]] },
+    "Has Attachments?": { "main": [[{ "node": "Split Attachments", "type": "main", "index": 0 }], []] },
+    "Split Attachments": { "main": [[{ "node": "Upload to App", "type": "main", "index": 0 }]] },
+    "Upload to App": { "main": [[{ "node": "Log Result", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": [{ "name": "document-ingestion" }, { "name": "email" }]
+}

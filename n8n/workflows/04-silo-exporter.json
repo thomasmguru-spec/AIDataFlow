@@ -1,0 +1,138 @@
+{
+  "name": "Silo WMS Exporter - Scheduled CSV Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 30 }]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 30 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "documents",
+        "filterType": "string",
+        "filterString": "status=eq.ready_for_silo",
+        "options": { "queryLimit": 1 }
+      },
+      "id": "check-pending",
+      "name": "Check Pending Documents",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "credentials": { "postgres": { "id": "supabase-db", "name": "Supabase DB" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "largerEqual",
+              "value2": 1
+            }
+          ]
+        }
+      },
+      "id": "has-pending",
+      "name": "Has Pending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.APP_URL }}/api/export/silo",
+        "sendBody": true,
+        "bodyParameters": { "parameters": [] },
+        "options": { "timeout": 120000 }
+      },
+      "id": "trigger-export",
+      "name": "Trigger Silo Export",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.exportId }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "export-success",
+      "name": "Export Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "audit_logs",
+        "columns": "action,entity_type,entity_id,details",
+        "options": {}
+      },
+      "id": "log-success",
+      "name": "Log Export Success",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1200, 100],
+      "credentials": { "postgres": { "id": "supabase-db", "name": "Supabase DB" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ALERT_FROM_EMAIL }}",
+        "toEmail": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "Silo Export Failed",
+        "text": "Silo CSV export failed at {{ $now.toISO() }}.\n\nError: {{ $json.error }}",
+        "options": {}
+      },
+      "id": "alert-failure",
+      "name": "Alert Export Failure",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "credentials": { "smtp": { "id": "smtp-config", "name": "SMTP" } }
+    },
+    {
+      "parameters": {},
+      "id": "no-op",
+      "name": "No Pending - Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [800, 400]
+    }
+  ],
+  "connections": {
+    "Every 30 Minutes": { "main": [[{ "node": "Check Pending Documents", "type": "main", "index": 0 }]] },
+    "Check Pending Documents": { "main": [[{ "node": "Has Pending?", "type": "main", "index": 0 }]] },
+    "Has Pending?": {
+      "main": [
+        [{ "node": "Trigger Silo Export", "type": "main", "index": 0 }],
+        [{ "node": "No Pending - Skip", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Silo Export": { "main": [[{ "node": "Export Success?", "type": "main", "index": 0 }]] },
+    "Export Success?": {
+      "main": [
+        [{ "node": "Log Export Success", "type": "main", "index": 0 }],
+        [{ "node": "Alert Export Failure", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "silo-integration" }, { "name": "scheduled" }]
+}

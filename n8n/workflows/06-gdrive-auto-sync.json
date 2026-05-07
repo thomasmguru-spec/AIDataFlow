@@ -1,0 +1,84 @@
+{
+  "name": "06-gdrive-auto-sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.APP_URL}}/api/gdrive/sync?token={{$env.GDRIVE_SYNC_SECRET}}",
+        "options": {},
+        "method": "GET"
+      },
+      "id": "sync-call",
+      "name": "Call Sync API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.imported}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-imported",
+      "name": "New Files?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "message": "=Google Drive Sync: {{$json.imported}} new document(s) imported from {{$json.checked}} total files.",
+        "additionalFields": {}
+      },
+      "id": "log-result",
+      "name": "Log Import",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 200]
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [{ "node": "Call Sync API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Call Sync API": {
+      "main": [
+        [{ "node": "New Files?", "type": "main", "index": 0 }]
+      ]
+    },
+    "New Files?": {
+      "main": [
+        [{ "node": "Log Import", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

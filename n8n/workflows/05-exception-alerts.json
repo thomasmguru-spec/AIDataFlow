@@ -1,0 +1,135 @@
+{
+  "name": "Exception Alerts - Priority Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "exceptions",
+        "filterType": "string",
+        "filterString": "status=eq.pending&priority=in.(critical,high)",
+        "options": { "queryLimit": 50 }
+      },
+      "id": "fetch-exceptions",
+      "name": "Fetch New Exceptions",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "credentials": { "postgres": { "id": "supabase-db", "name": "Supabase DB" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "largerEqual",
+              "value2": 1
+            }
+          ]
+        }
+      },
+      "id": "has-exceptions",
+      "name": "Has Exceptions?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value": "critical",
+              "output": 0
+            },
+            {
+              "value": "high",
+              "output": 1
+            }
+          ]
+        },
+        "fallbackOutput": 1,
+        "mode": "expression",
+        "output": "={{ $json.priority }}"
+      },
+      "id": "priority-switch",
+      "name": "Check Priority",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ALERT_FROM_EMAIL }}",
+        "toEmail": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "🚨 CRITICAL Exception: Document {{ $json.document_id }}",
+        "text": "A CRITICAL exception requires immediate attention.\n\nDocument ID: {{ $json.document_id }}\nReason: {{ $json.reason }}\nFailed Checks: {{ $json.failed_checks }}\nCreated: {{ $json.created_at }}\n\nPlease review at: {{ $env.APP_URL }}/dashboard/exceptions/{{ $json.id }}",
+        "options": {}
+      },
+      "id": "email-critical",
+      "name": "Email Critical Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1000, 200],
+      "credentials": { "smtp": { "id": "smtp-config", "name": "SMTP" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ALERT_FROM_EMAIL }}",
+        "toEmail": "={{ $env.REVIEWER_EMAIL }}",
+        "subject": "⚠️ High Priority Exception: Document {{ $json.document_id }}",
+        "text": "A high-priority exception needs review.\n\nDocument ID: {{ $json.document_id }}\nReason: {{ $json.reason }}\nFailed Checks: {{ $json.failed_checks }}\nCreated: {{ $json.created_at }}\n\nPlease review at: {{ $env.APP_URL }}/dashboard/exceptions/{{ $json.id }}",
+        "options": {}
+      },
+      "id": "email-high",
+      "name": "Email High Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1000, 400],
+      "credentials": { "smtp": { "id": "smtp-config", "name": "SMTP" } }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "notifications",
+        "columns": "type,title,message,severity",
+        "options": {}
+      },
+      "id": "create-notification",
+      "name": "Create Dashboard Notification",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "credentials": { "postgres": { "id": "supabase-db", "name": "Supabase DB" } }
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": { "main": [[{ "node": "Fetch New Exceptions", "type": "main", "index": 0 }]] },
+    "Fetch New Exceptions": { "main": [[{ "node": "Has Exceptions?", "type": "main", "index": 0 }]] },
+    "Has Exceptions?": { "main": [[{ "node": "Check Priority", "type": "main", "index": 0 }], []] },
+    "Check Priority": {
+      "main": [
+        [{ "node": "Email Critical Alert", "type": "main", "index": 0 }],
+        [{ "node": "Email High Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email Critical Alert": { "main": [[{ "node": "Create Dashboard Notification", "type": "main", "index": 0 }]] },
+    "Email High Alert": { "main": [[{ "node": "Create Dashboard Notification", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "alerts" }, { "name": "exceptions" }]
+}
