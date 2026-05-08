@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { validateRequest } from 'twilio';
+import { twiml, validateRequest, Twilio } from 'twilio';
 import { processDocument } from '@/lib/processing/pipeline';
-import { Twilio } from 'twilio';
+
+/** Return a TwiML MessagingResponse — Twilio requires text/xml, not JSON */
+function twimlResponse(status = 200) {
+  const response = new twiml.MessagingResponse();
+  return new NextResponse(response.toString(), {
+    status,
+    headers: { 'Content-Type': 'text/xml' },
+  });
+}
+
 
 // Vercel serverless: allow enough time for OCR + processing
 export const maxDuration = 60;
@@ -43,12 +52,12 @@ export async function POST(request: NextRequest) {
     if (authToken) {
       const twilioSignature = request.headers.get('x-twilio-signature');
       if (!twilioSignature) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return twimlResponse(401);
       }
       const url = request.url;
       const isValid = validateRequest(authToken, twilioSignature, url, body);
       if (!isValid) {
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+        return twimlResponse(403);
       }
     }
 
@@ -62,7 +71,7 @@ export async function POST(request: NextRequest) {
     const textBody = (body.Body || '') as string;
 
     if (!waNumber) {
-      return NextResponse.json({ error: 'Missing sender info' }, { status: 400 });
+      return twimlResponse(400);
     }
 
     const cleanNumber = waNumber.replace(/[^\d]/g, '');
@@ -179,13 +188,11 @@ export async function POST(request: NextRequest) {
       ).catch(err => console.error('Reply send failed:', err));
     }
 
-    return NextResponse.json({
-      status: 'received',
-      messageId,
-      documents: results,
-    });
+    // Twilio requires a TwiML (text/xml) response — JSON causes error 12300.
+    // Replies are sent programmatically via sendWhatsAppReply(), so <Response/> is empty.
+    return twimlResponse();
   } catch (err: unknown) {
     console.error('WhatsApp webhook error:', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return twimlResponse(500);
   }
 }
